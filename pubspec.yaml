@@ -3,7 +3,7 @@ description: A new flutter plugin project.
 
 flutter:
   plugin:
-    androidPackage: com.yourcompany.permit
+    androidPackage: com.goposse.permit
     pluginClass: PermitPlugin
 
 dependencies:
