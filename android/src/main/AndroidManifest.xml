@@ -1,0 +1,11 @@
+<manifest
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	package="com.goposse.permit">
+	<application android:allowBackup="false">
+		<activity
+			android:name=".activities.PermissionActivity"
+			android:alwaysRetainTaskState="false"
+			android:launchMode="singleTask"
+			android:theme="@style/Theme.Empty" />
+	</application>
+</manifest>

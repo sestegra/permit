@@ -1,0 +1,18 @@
+# mac system
+.DS_Store
+
+# atom
+.atom/
+
+# intellij
+.idea
+
+# dart / flutter
+.packages
+.pub/
+build/
+ios/.generated/
+packages
+pubspec.lock
+coverage
+__temp_coverage*

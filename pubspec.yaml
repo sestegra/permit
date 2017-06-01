@@ -1,0 +1,11 @@
+name: permit
+description: A new flutter plugin project.
+
+flutter:
+  plugin:
+    androidPackage: com.yourcompany.permit
+    pluginClass: PermitPlugin
+
+dependencies:
+  flutter:
+    sdk: flutter
