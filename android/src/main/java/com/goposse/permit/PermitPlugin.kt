@@ -32,8 +32,10 @@ class PermitPlugin(val activity: Activity) : MethodCallHandler {
 	override fun onMethodCall(call: MethodCall, result: Result) {
 		when(call.method) {
 			"check", "request" -> {
+				Log.d(LOG_TAG, "Method call was ${call.method}, invoking plugin")
 				val permissions: List<Int>? = call.argument("permissions")
-				if (permissions == null) {
+				if (permissions == null || permissions.size == 0) {
+					Log.e(LOG_TAG, "No permissions were passed");
 					result.error(PERMIT_ERR_INVALID_REQUEST, "No permissions were passed", null)
 					return
 				}
@@ -60,16 +62,21 @@ class PermitPlugin(val activity: Activity) : MethodCallHandler {
 				Log.w(LOG_TAG, "Permit: type ($permissionInt) not supported")
 				continue
 			}
+			Log.d(LOG_TAG, "Checking $requestedPermission")
 			var permissionResult = PermitResult.fromResultCode(
 					ContextCompat.checkSelfPermission(activity, requestedPermission)
 			)
+
 			if (permissionResult != PermitResult.granted) {
 				if (ActivityCompat.shouldShowRequestPermissionRationale(activity, requestedPermission)) {
+					Log.d(LOG_TAG, "$requestedPermission has been denied previously and will require a justification")
 					permissionResult = PermitResult.requiresJustification
 				}
 			}
+			Log.d(LOG_TAG, "Permission for $requestedPermission ${permissionResult}")
 			resultsMap[permissionInt] = permissionResult.value
 		}
+		Log.d(LOG_TAG, "All permissions checked, returning ${resultsMap.javaClass.name} with integer keys of permission types and integer values of permission results")
 		result.success(
 				mapOf("results" to resultsMap)
 		)
