@@ -13,42 +13,23 @@ class MyApp extends StatelessWidget {
     return new MaterialApp(
       title: 'Flutter Demo',
       theme: new ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see
-        // the application has a blue toolbar. Then, without quitting
-        // the app, try changing the primarySwatch below to Colors.green
-        // and then invoke "hot reload" (press "r" in the console where
-        // you ran "flutter run", or press Run > Hot Reload App in IntelliJ).
-        // Notice that the counter didn't reset back to zero -- the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: new MyHomePage(title: 'Flutter Demo Home Page'),
+      home: new MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful,
-  // meaning that it has a State object (defined below) that contains
-  // fields that affect how it looks.
-
-  // This class is the configuration for the state. It holds the
-  // values (in this case the title) provided by the parent (in this
-  // case the App widget) and used by the build method of the State.
-  // Fields in a Widget subclass are always marked "final".
-
-  final String title;
+  MyHomePage({Key key}) : super(key: key);
 
   @override
   _MyHomePageState createState() => new _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String _platformVersion = 'Unknown';
+  PermitResult _permissionStatuses;
+  Set<PermitType> _selectedPermissions = new Set<PermitType>();
 
   @override
   initState() {
@@ -58,13 +39,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // Platform messages are asynchronous, so we initialize in an async method.
   initPlatformState() async {
-    Map<PermitType, PermitResult> permitResults;
+    PermitResult permitResult;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
-      permitResults = await Permit.checkPermissions([PermitType.fineLocation]);
+      permitResult = await Permit.checkPermissions(PermitType.values);
     } on PlatformException {
       print("ERROR!!!!");
-      permitResults = null;
     }
 
     // If the widget was removed from the tree while the asynchronous platform
@@ -73,9 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (!mounted) return;
 
     setState(() {
-      print(permitResults);
-//      final result = permitResults[PermitType.fineLocation];
-//      _platformVersion = result.result == 1 ? "Has permission" : "No permission";
+      _permissionStatuses = permitResult;
     });
   }
 
@@ -85,14 +63,99 @@ class _MyHomePageState extends State<MyHomePage> {
       child: new Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          new Text('Has permission (location): $_platformVersion'),
-          new FlatButton(onPressed: tappedRequestButton, child: new Text("Request")),
+          new Expanded(
+            child: new Padding(
+              padding: const EdgeInsets.only(top: 40.0),
+              child: new ListView(
+                children: _permissionStatusCells(),
+              ),
+            ),
+          ),
+          new Container(
+            constraints: new BoxConstraints.expand(height: 50.0),
+            child: new MaterialButton(
+              color: Colors.blue,
+              textColor: Colors.white,
+              onPressed: () {
+                tappedRequestButton();
+              },
+              child: new Text("Request Selections"),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  void tappedRequestButton() {
-    Permit.requestPermissions([PermitType.fineLocation, PermitType.camera, PermitType.phone]);
+  List<Widget> _permissionStatusCells() {
+    List<Widget> cells = new List<Widget>();
+    PermitType.values.forEach((permitType) {
+      String status = "unknown";
+      if (_permissionStatuses != null) {
+        status = _resultCodeToReadableString(
+            _permissionStatuses.resultCodeForPermitType(permitType));
+      }
+      Widget cell = new Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: new Container(
+          decoration: new BoxDecoration(
+            border: new Border.all(
+              color: Colors.grey,
+              width: 2.0,
+            ),
+          ),
+          child: new Row(
+            children: <Widget>[
+              new Checkbox(
+                value: _selectedPermissions.contains(permitType),
+                onChanged: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _selectedPermissions.add(permitType);
+                    } else {
+                      _selectedPermissions.remove(permitType);
+                    }
+                  });
+                },
+              ),
+              new Text(
+                permitType.toString(),
+              ),
+              new Expanded(
+                child: new Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: new Text(
+                    status,
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
+      );
+      cells.add(cell);
+    });
+    return cells;
+  }
+
+  String _resultCodeToReadableString(int resultCode) {
+    if (resultCode == PermitResult.resultCodePermitted) {
+      return "granted";
+    } else if (resultCode == PermitResult.resultCodeNotPermitted) {
+      return "not granted";
+    } else if (resultCode == PermitResult.resultCodeRequiresJustification) {
+      return "requires justification";
+    } else if (resultCode == PermitResult.resultUnknown) {
+      return "unknown";
+    } else {
+      return "unavailable";
+    }
+  }
+
+  tappedRequestButton() async {
+    List<PermitType> selectedPermissionsList = _selectedPermissions.toList();
+    await Permit.requestPermissions(selectedPermissionsList);
+    print("done");
   }
 }

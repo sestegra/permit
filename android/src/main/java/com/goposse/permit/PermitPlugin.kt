@@ -34,8 +34,8 @@ class PermitPlugin(val activity: Activity) : MethodCallHandler {
 			"check", "request" -> {
 				Log.d(LOG_TAG, "Method call was ${call.method}, invoking plugin")
 				val permissions: List<Int>? = call.argument("permissions")
-				if (permissions == null || permissions.size == 0) {
-					Log.e(LOG_TAG, "No permissions were passed");
+				if (permissions == null || permissions.isEmpty()) {
+					Log.e(LOG_TAG, "No permissions were passed")
 					result.error(PERMIT_ERR_INVALID_REQUEST, "No permissions were passed", null)
 					return
 				}
@@ -77,9 +77,7 @@ class PermitPlugin(val activity: Activity) : MethodCallHandler {
 			resultsMap[permissionInt] = permissionResult.value
 		}
 		Log.d(LOG_TAG, "All permissions checked, returning ${resultsMap.javaClass.name} with integer keys of permission types and integer values of permission results")
-		result.success(
-				mapOf("results" to resultsMap)
-		)
+		result.success(resultsMap)
 	}
 
 	/**

@@ -1,0 +1,22 @@
+PODS:
+  - Flutter (1.0.0)
+  - permit (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `/Users/KG/Developer/Flutter/flutter/bin/cache/artifacts/engine/ios`)
+  - permit (from `/Users/KG/Developer/Client/hamilton-flutter/plugins/permit/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: "/Users/KG/Developer/Flutter/flutter/bin/cache/artifacts/engine/ios"
+  permit:
+    :path: "/Users/KG/Developer/Client/hamilton-flutter/plugins/permit/ios"
+
+SPEC CHECKSUMS:
+  Flutter: d674e78c937094a75ac71dd77e921e840bea3dbf
+  permit: 79dcc9a69382359c4b2db69791fdf4d0dedcbf06
+
+PODFILE CHECKSUM: cc70c01bca487bebd110b87397f017f3b76a89f1
+
+COCOAPODS: 1.2.1
