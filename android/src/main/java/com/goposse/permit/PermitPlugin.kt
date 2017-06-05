@@ -18,7 +18,9 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.util.Log
 import com.goposse.permit.activities.PermissionActivity
-import com.goposse.permit.types.*
+import com.goposse.permit.common.*
+import com.goposse.permit.types.PermitResult
+import com.goposse.permit.types.PermitType
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
@@ -71,6 +73,11 @@ class PermitPlugin(val activity: Activity) : MethodCallHandler {
 				if (ActivityCompat.shouldShowRequestPermissionRationale(activity, requestedPermission)) {
 					Log.d(LOG_TAG, "$requestedPermission has been denied previously and will require a justification")
 					permissionResult = PermitResult.requiresJustification
+				} else {
+					val prefs = Prefs(context = activity)
+					if (prefs.getPermissionRequestCount(requestedPermission) == 0) {
+						permissionResult = PermitResult.unknown;
+					}
 				}
 			}
 			Log.d(LOG_TAG, "Permission for $requestedPermission ${permissionResult}")
@@ -109,12 +116,40 @@ class PermitPlugin(val activity: Activity) : MethodCallHandler {
 	}
 
 	private fun completeReceiver(result: Result, resultCode: Int, resultData: Bundle?) {
+		Log.d(LOG_TAG, "request resultData: $resultData")
 		if (resultCode == PERMIT_RECEIVER_CODE_INVALID_REQUEST) {
 			Log.w(LOG_TAG, "Permit: The request was invalid.  Please check the logs.")
 			result.error(PERMIT_ERR_INVALID_REQUEST, "The request was invalid", null)
 			return
 		}
-		// TODO - parse resultData and return to channel
+		val permissions = resultData?.getStringArray("permissions")
+		val grantResults = resultData?.getIntArray("grantResults")
+		if (permissions != null && grantResults != null && (permissions.size == grantResults.size)) {
+			val resultsMap = mutableMapOf<Int, Int>()
+			val prefs = Prefs(activity)
+
+			for (i in 0 until permissions.size) {
+				val permission = permissions[i]
+				val permissionPermitType = PermitType.fromString(permission)
+				if (permissionPermitType == null) {
+					Log.w(LOG_TAG, "An invalid permission ($permission) returned in receiver, ignoring.")
+					continue
+				}
+				val permissionPermitValue = permissionPermitType.value
+				val grantResult = grantResults[i]
+				resultsMap[permissionPermitValue] = grantResult
+				// Increment the number of times we have requested this from the user
+				val requestCount = prefs.incrementPermissionRequestCount(permission)
+				Log.d(LOG_TAG, "Permission $permission requested $requestCount times")
+			}
+			Log.d(LOG_TAG, "Returning a map of permisions and request results")
+			result.success(resultsMap)
+			return
+		} else {
+			Log.w(LOG_TAG, "Permit: The result data was empty.")
+			result.error(PERMIT_ERR_GENERAL, "The request did not return valid result data", null)
+			return
+		}
 	}
 
 	companion object {

@@ -1,6 +1,14 @@
 #import "PermitPlugin.h"
+#import <AVFoundation/AVFoundation.h>
 
 @implementation PermitPlugin
+
+const int CAMERA_PERMISSION_VALUE = 0;
+const int COARSE_LOCATION_PERMISSION_VALUE = 1;
+const int FINE_LOCATION_PERMISSION_VALUE = 2;
+const int PHONE_PERMISSION_VALUE = 3;
+const int PUSH_PERMISSION_VALUE = 4;
+
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
   FlutterMethodChannel* channel = [FlutterMethodChannel
       methodChannelWithName:@"permit"
@@ -15,7 +23,7 @@
     NSArray* permissions = (NSArray*)call.arguments[@"permissions"];
     if (permissions == nil || permissions.count == 0) {
       NSLog(@"No permissions were passed");
-      result([FlutterError errorWithCode:@"500"
+      result([FlutterError errorWithCode:@"701"
                                  message:@"No permissions were passed"
                                  details:nil]);
       return;
@@ -32,13 +40,19 @@
 }
 
 - (void)checkPermissions:(NSArray*)permissions result:(FlutterResult)result {
-  result([FlutterError errorWithCode:@"500"
+  for (NSNumber *permissionInt in permissions) {
+    if (permissionInt == CAMERA_PERMISSION_VALUE) {
+      AVAuthorizationStatus avStatus =
+      [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
+    }
+  }
+  result([FlutterError errorWithCode:@"701"
                              message:@"check permissions not implemented"
                              details:nil]);
 }
 
 - (void)requestPermissions:(NSArray*)permissions result:(FlutterResult)result {
-  result([FlutterError errorWithCode:@"500"
+  result([FlutterError errorWithCode:@"701"
                              message:@"request permissions not implemented"
                              details:nil]);
 }

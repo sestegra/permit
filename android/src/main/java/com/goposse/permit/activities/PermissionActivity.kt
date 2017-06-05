@@ -12,9 +12,9 @@ import android.os.Bundle
 import android.os.ResultReceiver
 import android.support.v4.app.ActivityCompat
 import android.util.Log
-import com.goposse.permit.types.PERMIT_PERMISSION_REQUEST_CODE
-import com.goposse.permit.types.PERMIT_RECEIVER_CODE_INVALID_REQUEST
-import com.goposse.permit.types.PERMIT_RECEIVER_CODE_VALID_REQUEST
+import com.goposse.permit.common.PERMIT_PERMISSION_REQUEST_CODE
+import com.goposse.permit.common.PERMIT_RECEIVER_CODE_INVALID_REQUEST
+import com.goposse.permit.common.PERMIT_RECEIVER_CODE_VALID_REQUEST
 
 class PermissionActivity : Activity() {
 
@@ -44,7 +44,8 @@ class PermissionActivity : Activity() {
 		val receiver = intent.extras.get("resultReceiver") as ResultReceiver
 		val resultData = Bundle()
 		if (permissions != null && grantResults != null) {
-//			resultData.putIntegerArrayList("grantResults", grantResults)
+			resultData.putStringArray("permissions", permissions);
+			resultData.putIntArray("grantResults", grantResults);
 		}
 		receiver.send(resultCode, resultData)
 		finish()

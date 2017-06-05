@@ -8,6 +8,7 @@
 package com.goposse.permit.types
 
 import android.Manifest
+import com.goposse.permit.common.PERMIT_NOT_USED
 
 enum class PermitType(val value: Int) {
 	camera(0) {
@@ -37,6 +38,15 @@ enum class PermitType(val value: Int) {
 				4 to push
 		)
 
+		val stringMap = mapOf(
+				camera.permission() to camera,
+				coarseLocation.permission() to coarseLocation,
+				fineLocation.permission() to fineLocation,
+				phone.permission() to phone,
+				push.permission() to push
+		)
+
 		fun fromInt(intValue: Int): PermitType? = valueMap[intValue]
+		fun fromString(stringValue: String): PermitType? = stringMap[stringValue]
 	}
 }

@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:flutter/services.dart';
 
 enum PermitType { camera, coarseLocation, fineLocation, phone, push }
+enum PermissionStatus { unknown, needsRationale, denied, granted }
 
 class PermitResult {
   static final _mapKeyResult = "result";
@@ -56,7 +57,7 @@ class Permit {
     var intPermissionsSet =
         new Set<int>.from(permissions.map((type) => type.index));
     try {
-      // channelResults should be a LinkedHashMap with int keys and map<string, dynamic> values
+      // channelResults should be a LinkedHashMap with int keys and int values
       var channelResults = await _channel.invokeMethod('check', {
         'permissions': intPermissionsSet.toList(),
       });
@@ -89,10 +90,8 @@ class Permit {
         .invokeMethod('request', {'permissions': intPermissionsSet.toList()});
     print("invoke returned");
     if (permissionsMap == null) {
-      print("Hello!?");
       return new Map<PermitType, PermitResult>();
     }
-    print("WHAT????");
     return new Map<PermitType, PermitResult>();
   }
 

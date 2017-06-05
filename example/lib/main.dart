@@ -156,6 +156,7 @@ class _MyHomePageState extends State<MyHomePage> {
   tappedRequestButton() async {
     List<PermitType> selectedPermissionsList = _selectedPermissions.toList();
     await Permit.requestPermissions(selectedPermissionsList);
+    await initPlatformState();
     print("done");
   }
 }
