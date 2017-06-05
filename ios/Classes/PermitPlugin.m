@@ -85,32 +85,33 @@
   NSMutableDictionary *resultsDictionary = [[NSMutableDictionary alloc] init];
   for (NSNumber *permissionNumber in permissions) {
     long permissionTypeLong = [permissionNumber longValue];
-    if (permissionTypeLong == PermitTypeAlwaysLocation) {
-      [self.clLocationManager requestAlwaysAuthorization];
-      self.locationPermissionRequestCallback = ^(CLAuthorizationStatus status ) {
-        PermissionResult finalResult = PermissionResultDenied;
-        if (status == kCLAuthorizationStatusAuthorizedAlways) {
-          finalResult = PermissionResultGranted;
+    if (permissionTypeLong == PermitTypeAlwaysLocation || permissionTypeLong == PermitTypeWhenInUseLocation) {
+      // Check if the status is unknown, that's the only case in which we should
+      // actually request, otherwise return the result
+      PermissionResult permissionResult = [self checkPermission:permissionNumber];
+      if (permissionResult == PermissionResultUnknown) {
+        if (permissionTypeLong == PermitTypeAlwaysLocation) {
+          [self.clLocationManager requestAlwaysAuthorization];
+        } else {
+          [self.clLocationManager requestWhenInUseAuthorization];
         }
-        [resultsDictionary setObject:[NSNumber numberWithInt:finalResult]
-                              forKey:[NSNumber numberWithLong:permissionTypeLong]];
+        // Set a callback for didChangeAuthorizationStatus
+        self.locationPermissionRequestCallback = ^(CLAuthorizationStatus status ) {
+          PermissionResult finalResult = PermissionResultDenied;
+          if (status == kCLAuthorizationStatusAuthorizedAlways) {
+            finalResult = PermissionResultGranted;
+          }
+          [resultsDictionary setObject:[NSNumber numberWithInt:finalResult]
+                                forKey:[NSNumber numberWithLong:permissionTypeLong]];
+          result(resultsDictionary);
+          return;
+        };
+      } else {
+        [resultsDictionary setObject:[NSNumber numberWithInt:permissionResult]
+                              forKey:[NSNumber numberWithInt:[permissionNumber intValue]]];
         result(resultsDictionary);
         return;
-        
-      };
-    } else if (permissionTypeLong == PermitTypeWhenInUseLocation) {
-      [self.clLocationManager requestWhenInUseAuthorization];
-      self.locationPermissionRequestCallback = ^(CLAuthorizationStatus status ) {
-        PermissionResult finalResult = PermissionResultDenied;
-        if (status == kCLAuthorizationStatusAuthorizedWhenInUse) {
-          finalResult = PermissionResultGranted;
-        }
-        [resultsDictionary setObject:[NSNumber numberWithInt:finalResult]
-                              forKey:[NSNumber numberWithLong:permissionTypeLong]];
-        
-        result(resultsDictionary);
-        return;
-      };
+      }
     }
   }
 }

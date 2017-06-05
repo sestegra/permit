@@ -439,7 +439,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Flutter",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.permitExample;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.permitExample4;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -462,7 +462,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/Flutter",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.permitExample;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.permitExample4;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
