@@ -41,40 +41,22 @@ class Permit {
   // plugin functions
   static Future<PermitResult> checkPermissions(
       List<PermitType> permissions) async {
-    var intPermissionsSet =
-        new Set<int>.from(permissions.map((type) => type.index));
-    try {
-      // channelResults should be a LinkedHashMap with int keys and int values
-      var channelResults = await _channel.invokeMethod('check', {
-        'permissions': intPermissionsSet.toList(),
-      });
-
-      if (channelResults == null) {
-        return new PermitResult(
-          null,
-          errorCode: PermitResult.errorCodeGeneral,
-          errorMessage: "Check permissions failed: null channel results",
-        );
-      } else {
-        return new PermitResult(_resultsFromMap(channelResults));
-      }
-    } on PlatformException catch (e) {
-      return new PermitResult(
-        null,
-        errorCode: PermitResult.errorCodeGeneral,
-        errorMessage: "Check permissions failed: ${e.message}",
-      );
-    }
+    return invokePermitChannelMethod(permissions, 'check');
   }
 
   static Future<PermitResult> requestPermissions(
       List<PermitType> permissions) async {
+    return invokePermitChannelMethod(permissions, 'request');
+  }
+
+  static Future<PermitResult> invokePermitChannelMethod(
+      List<PermitType> permissions, String method) async {
     var intPermissionsSet =
-        new Set<int>.from(permissions.map((type) => type.index));
+    new Set<int>.from(permissions.map((type) => type.index));
 
     try {
       // channelResults should be a LinkedHashMap with int keys and int values
-      var channelResults = await _channel.invokeMethod('request', {
+      var channelResults = await _channel.invokeMethod(method, {
         'permissions': intPermissionsSet.toList(),
       });
 
