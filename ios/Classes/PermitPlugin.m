@@ -47,33 +47,38 @@
 - (void)checkPermissions:(NSArray*)permissions result:(FlutterResult)result {
   NSMutableDictionary *resultsDictionary = [[NSMutableDictionary alloc] init];
   for (NSNumber *permissionNumber in permissions) {
-    // The default status will be unavailable for any permission type
-    long permissionTypeLong = [permissionNumber longValue];
-    int permissionStatus = PermissionResultUnavailable;
-    
-    if (permissionTypeLong == PermitTypeWhenInUseLocation
-        || permissionTypeLong == PermitTypeAlwaysLocation) {
-      // Location permissions check
-      CLAuthorizationStatus clAuthStatus =
-        [CLLocationManager authorizationStatus];
-      
-      // Default to denied, which would be the final else case
-      permissionStatus = PermissionResultDenied;
-      if (clAuthStatus == kCLAuthorizationStatusNotDetermined) {
-        permissionStatus = PermissionResultUnknown;
-      } else if ((clAuthStatus == kCLAuthorizationStatusAuthorizedAlways) ||
-                 (clAuthStatus == kCLAuthorizationStatusAuthorizedWhenInUse &&
-                 permissionTypeLong == PermitTypeWhenInUseLocation)) {
-        // This checks if the status is always granted, or if it is only
-        // when in use, check if that was what was requested.
-        permissionStatus = PermissionResultGranted;
-      }
-    }
-    [resultsDictionary setObject:[NSNumber numberWithInt:permissionStatus]
-                          forKey:[NSNumber numberWithLong:permissionTypeLong]];
+    PermissionResult permissionResult = [self checkPermission:permissionNumber];
+    [resultsDictionary setObject:[NSNumber numberWithInt:permissionResult]
+                          forKey:[NSNumber numberWithInt:[permissionNumber intValue]]];
   }
   NSLog(@"returning with check results: %@", resultsDictionary);
   result(resultsDictionary);
+}
+
+- (PermissionResult)checkPermission:(NSNumber*)permissionNumber {
+  // The default status will be unavailable for any permission type
+  NSInteger permissionType = [permissionNumber integerValue];
+  PermissionResult permissionResult = PermissionResultUnavailable;
+  
+  if (permissionType == PermitTypeWhenInUseLocation
+      || permissionType == PermitTypeAlwaysLocation) {
+    // Location permissions check
+    CLAuthorizationStatus clAuthStatus =
+    [CLLocationManager authorizationStatus];
+    
+    // Default to denied, which would be the final else case
+    permissionResult = PermissionResultDenied;
+    if (clAuthStatus == kCLAuthorizationStatusNotDetermined) {
+      permissionResult = PermissionResultUnknown;
+    } else if ((clAuthStatus == kCLAuthorizationStatusAuthorizedAlways) ||
+               (clAuthStatus == kCLAuthorizationStatusAuthorizedWhenInUse &&
+                permissionType == PermitTypeWhenInUseLocation)) {
+                 // This checks if the status is always granted, or if it is only
+                 // when in use, check if that was what was requested.
+                 permissionResult = PermissionResultGranted;
+               }
+  }
+  return permissionResult;
 }
 
 - (void)requestPermissions:(NSArray*)permissions result:(FlutterResult)result {
