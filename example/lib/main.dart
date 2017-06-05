@@ -91,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Widget> cells = new List<Widget>();
     PermitType.values.forEach((permitType) {
       String status = "unknown";
-      if (_permissionStatuses != null) {
+      if (_permissionStatuses != null && _permissionStatuses.results.containsKey(permitType)) {
         status = _resultCodeToReadableString(
             _permissionStatuses.resultCodeForPermitType(permitType));
       }
@@ -139,14 +139,14 @@ class _MyHomePageState extends State<MyHomePage> {
     return cells;
   }
 
-  String _resultCodeToReadableString(int resultCode) {
-    if (resultCode == PermitResult.resultCodePermitted) {
+  String _resultCodeToReadableString(PermissionStatus permissionStatus) {
+    if (permissionStatus == PermissionStatus.granted) {
       return "granted";
-    } else if (resultCode == PermitResult.resultCodeNotPermitted) {
-      return "not granted";
-    } else if (resultCode == PermitResult.resultCodeRequiresJustification) {
-      return "requires justification";
-    } else if (resultCode == PermitResult.resultUnknown) {
+    } else if (permissionStatus == PermissionStatus.denied) {
+      return "denied";
+    } else if (permissionStatus == PermissionStatus.needsRationale) {
+      return "needs rationale";
+    } else if (permissionStatus == PermissionStatus.unknown) {
       return "unknown";
     } else {
       return "unavailable";
@@ -156,7 +156,10 @@ class _MyHomePageState extends State<MyHomePage> {
   tappedRequestButton() async {
     List<PermitType> selectedPermissionsList = _selectedPermissions.toList();
     await Permit.requestPermissions(selectedPermissionsList);
-    await initPlatformState();
+    PermitResult permitResult = await Permit.checkPermissions(PermitType.values);
+    setState(() {
+      _permissionStatuses = permitResult;
+    });
     print("done");
   }
 }

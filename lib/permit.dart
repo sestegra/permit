@@ -7,16 +7,6 @@ enum PermitType { camera, coarseLocation, fineLocation, phone, push }
 enum PermissionStatus { unknown, needsRationale, denied, granted }
 
 class PermitResult {
-  static final _mapKeyResult = "result";
-  static final _mapKeyErrorCode = "errorCode";
-  static final _mapKeyErrorMessage = "errorMessage";
-
-  static final resultCodePermitted = 1;
-  static final resultCodeNotPermitted = -1;
-  static final resultCodeRequiresJustification = 2;
-  static final resultUnknown = 0;
-  static final resultUnavailable = -2;
-
   static final errorCodeGeneral = 500;
 
   // generic error result
@@ -35,16 +25,13 @@ class PermitResult {
   /// see: https://developer.android.com/training/permissions/requesting.html#perm-request
   /// NOTE: needsJustification will always be false on iOS as you can only request
   /// permissions once
-  final Map<PermitType, int> results;
+  final Map<PermitType, PermissionStatus> results;
 
   // Used to check if the result was successful, or if there was an error
   bool success() => errorCode == 0;
 
-  int resultCodeForPermitType(PermitType permitType) {
-    if (results != null && results.containsKey(permitType)) {
-      return results[permitType];
-    }
-    return resultUnavailable;
+  PermissionStatus resultCodeForPermitType(PermitType permitType) {
+    return results[permitType];
   }
 }
 
@@ -78,27 +65,44 @@ class Permit {
         errorMessage: "Check permissions failed: ${e.message}",
       );
     }
-    return null;
   }
 
-  static Future<Map<PermitType, PermitResult>> requestPermissions(
+  static Future<PermitResult> requestPermissions(
       List<PermitType> permissions) async {
     var intPermissionsSet =
         new Set<int>.from(permissions.map((type) => type.index));
-    print("calling invoke");
-    Map<String, dynamic> permissionsMap = await _channel
-        .invokeMethod('request', {'permissions': intPermissionsSet.toList()});
-    print("invoke returned");
-    if (permissionsMap == null) {
-      return new Map<PermitType, PermitResult>();
+
+    try {
+      // channelResults should be a LinkedHashMap with int keys and int values
+      var channelResults = await _channel.invokeMethod('request', {
+        'permissions': intPermissionsSet.toList(),
+      });
+
+      if (channelResults == null) {
+        return new PermitResult(
+          null,
+          errorCode: PermitResult.errorCodeGeneral,
+          errorMessage: "Check permissions failed: null channel results",
+        );
+      } else {
+        return new PermitResult(_resultsFromMap(channelResults));
+      }
+    } on PlatformException catch (e) {
+      return new PermitResult(
+        null,
+        errorCode: PermitResult.errorCodeGeneral,
+        errorMessage: "Check permissions failed: ${e.message}",
+      );
     }
-    return new Map<PermitType, PermitResult>();
   }
 
-  static Map<PermitType, int> _resultsFromMap(Map<int, int> resultsMap) {
-    Map<PermitType, int> finalResults = new Map<PermitType, int>();
-    resultsMap.forEach((permitTypeInt, permitTypeResult) {
-      finalResults[_permitTypeFromInt(permitTypeInt)] = permitTypeResult;
+  static Map<PermitType, PermissionStatus> _resultsFromMap(
+      Map<int, int> resultsMap) {
+    Map<PermitType, PermissionStatus> finalResults =
+        new Map<PermitType, PermissionStatus>();
+    resultsMap.forEach((permitTypeInt, permissionResult) {
+      finalResults[_permitTypeFromInt(permitTypeInt)] =
+          PermissionStatus.values[permissionResult];
     });
     return finalResults;
   }

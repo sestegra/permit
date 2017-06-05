@@ -20,7 +20,7 @@ class Prefs(private val context: Context) {
     fun incrementPermissionRequestCount(permission: String): Int {
         var currentCount = getPermissionRequestCount(permission)
         currentCount += 1
-        putInt(permission, currentCount)
+        putInt("$permission$PERMISSION_REQUEST_COUNT_KEY_APPENDAGE", currentCount)
         return currentCount
     }
     // preference save helpers

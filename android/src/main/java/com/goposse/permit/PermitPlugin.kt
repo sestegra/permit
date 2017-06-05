@@ -10,6 +10,7 @@ package com.goposse.permit
 import android.app.Activity
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -72,10 +73,11 @@ class PermitPlugin(val activity: Activity) : MethodCallHandler {
 			if (permissionResult != PermitResult.granted) {
 				if (ActivityCompat.shouldShowRequestPermissionRationale(activity, requestedPermission)) {
 					Log.d(LOG_TAG, "$requestedPermission has been denied previously and will require a justification")
-					permissionResult = PermitResult.requiresJustification
+					permissionResult = PermitResult.needsRationale
 				} else {
 					val prefs = Prefs(context = activity)
 					if (prefs.getPermissionRequestCount(requestedPermission) == 0) {
+						Log.d(LOG_TAG, "$requestedPermission has been never been requested previously")
 						permissionResult = PermitResult.unknown;
 					}
 				}
@@ -137,7 +139,11 @@ class PermitPlugin(val activity: Activity) : MethodCallHandler {
 				}
 				val permissionPermitValue = permissionPermitType.value
 				val grantResult = grantResults[i]
-				resultsMap[permissionPermitValue] = grantResult
+				var permitGrantResult = PermitResult.denied
+				if (grantResult == PackageManager.PERMISSION_GRANTED) {
+					permitGrantResult = PermitResult.granted
+				}
+				resultsMap[permissionPermitValue] = permitGrantResult.value
 				// Increment the number of times we have requested this from the user
 				val requestCount = prefs.incrementPermissionRequestCount(permission)
 				Log.d(LOG_TAG, "Permission $permission requested $requestCount times")

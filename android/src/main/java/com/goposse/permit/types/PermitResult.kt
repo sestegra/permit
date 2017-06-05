@@ -11,7 +11,8 @@ enum class PermitResult(val value: Int) {
 	unknown(0),
 	needsRationale(1),
 	denied(2),
-	granted(3);
+	granted(3),
+	unavailable(4);
 
 	companion object {
 		fun fromResultCode(resultCode: Int): PermitResult {
