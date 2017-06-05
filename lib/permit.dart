@@ -3,8 +3,8 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/services.dart';
 
-enum PermitType { camera, coarseLocation, fineLocation, phone, push }
-enum PermissionStatus { unknown, needsRationale, denied, granted }
+enum PermitType { camera, coarseLocation, fineLocation, whenInUseLocation, alwaysLocation, phone, push }
+enum PermissionStatus { unknown, needsRationale, denied, granted, unavailable }
 
 class PermitResult {
   static final errorCodeGeneral = 500;
@@ -88,6 +88,7 @@ class Permit {
         return new PermitResult(_resultsFromMap(channelResults));
       }
     } on PlatformException catch (e) {
+      print(e.message);
       return new PermitResult(
         null,
         errorCode: PermitResult.errorCodeGeneral,

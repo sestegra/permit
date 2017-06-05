@@ -90,10 +90,12 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Widget> _permissionStatusCells() {
     List<Widget> cells = new List<Widget>();
     PermitType.values.forEach((permitType) {
-      String status = "unknown";
-      if (_permissionStatuses != null && _permissionStatuses.results.containsKey(permitType)) {
-        status = _resultCodeToReadableString(
-            _permissionStatuses.resultCodeForPermitType(permitType));
+      String status = "unavailable";
+      if (_permissionStatuses != null && _permissionStatuses.success()) {
+        if (_permissionStatuses.results.containsKey(permitType)) {
+          status = _resultCodeToReadableString(
+              _permissionStatuses.resultCodeForPermitType(permitType));
+        }
       }
       Widget cell = new Padding(
         padding: const EdgeInsets.all(8.0),
