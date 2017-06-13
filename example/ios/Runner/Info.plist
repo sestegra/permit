@@ -22,6 +22,10 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>A description explaining why we need to always track the user's location.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>A description explaining why we need to track the user's location when the app is open.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

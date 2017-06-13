@@ -8,15 +8,16 @@
 package com.goposse.permit.types
 
 enum class PermitResult(val value: Int) {
-	granted(1),
-	notGranted(-1),
-	requiresJustification(2),
-	unknown(0);
+	unknown(0),
+	needsRationale(1),
+	denied(2),
+	granted(3),
+	unavailable(4);
 
 	companion object {
 		fun fromResultCode(resultCode: Int): PermitResult {
 			if (resultCode == -1) {
-				return notGranted
+				return denied
 			} else if (resultCode == 0) {
 				return granted
 			}

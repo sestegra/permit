@@ -1,75 +1,99 @@
 import 'dart:async';
 
+import 'dart:collection';
 import 'package:flutter/services.dart';
 
-enum PermitType {
-  camera,
-  coarseLocation,
-  fineLocation,
-  phone,
-  push
-}
+enum PermitType { camera, coarseLocation, fineLocation, whenInUseLocation, alwaysLocation, phone, push }
+enum PermissionStatus { unknown, needsRationale, denied, granted, unavailable }
 
 class PermitResult {
-
-  static final _mapKeyResult = "result";
-  static final _mapKeyErrorCode = "errorCode";
-  static final _mapKeyErrorMessage = "errorMessage";
-
-  static final resultCodePermitted = 0;
-  static final resultCodeNotPermitted = -1;
-
   static final errorCodeGeneral = 500;
 
   // generic error result
-  static PermitResult error = new PermitResult(resultCodePermitted, errorCode: errorCodeGeneral,
-      errorMessage: "Permissions Check Failed");
+  static PermitResult error = new PermitResult(null,
+      errorCode: errorCodeGeneral, errorMessage: "Permissions Check Failed");
 
   // constructors
-  PermitResult(this.result, {this.errorCode = 0, this.errorMessage});
+  PermitResult(this.results, {this.errorCode = 0, this.errorMessage});
 
-  PermitResult.fromMap(Map<String, dynamic> map) :
-      this.result = map[_mapKeyResult] ?? -1,
-      this.errorCode = map[_mapKeyErrorCode],
-      this.errorMessage = map[_mapKeyErrorMessage];
+  /// if there was an error returned while trying to check the permission status
+  final int errorCode;
+
+  /// if the platform plugin has provided an error message
+  final String errorMessage;
 
   /// see: https://developer.android.com/training/permissions/requesting.html#perm-request
   /// NOTE: needsJustification will always be false on iOS as you can only request
   /// permissions once
-  final int result;
-  /// if there was an error returned while trying to check the permission status
-  final int errorCode;
-  /// if the platform plugin has provided an error message
-  final String errorMessage;
+  final Map<PermitType, PermissionStatus> results;
+
+  // Used to check if the result was successful, or if there was an error
+  bool success() => errorCode == 0;
+
+  PermissionStatus resultCodeForPermitType(PermitType permitType) {
+    return results[permitType];
+  }
 }
 
-
 class Permit {
-
   static const MethodChannel _channel = const MethodChannel('permit');
 
   // plugin functions
-  static Future<Map<PermitType, PermitResult>> checkPermissions(List<PermitType> permissions) async {
-    var intPermissionsSet = new Set<int>.from(permissions.map((type) => type.index));
-    Map<String, dynamic> permissionsMap = await _channel.invokeMethod('check',
-        {'permissions' : intPermissionsSet.toList()});
-    if (permissionsMap == null) {
-//      return new PermitResult.fromMap(permissionsMap);
+  static Future<PermitResult> checkPermissions(
+      List<PermitType> permissions) async {
+    return invokePermitChannelMethod(permissions, 'check');
+  }
+
+  static Future<PermitResult> requestPermissions(
+      List<PermitType> permissions) async {
+    return invokePermitChannelMethod(permissions, 'request');
+  }
+
+  static Future<PermitResult> invokePermitChannelMethod(
+      List<PermitType> permissions, String method) async {
+    var intPermissionsSet =
+    new Set<int>.from(permissions.map((type) => type.index));
+
+    try {
+      // channelResults should be a LinkedHashMap with int keys and int values
+      var channelResults = await _channel.invokeMethod(method, {
+        'permissions': intPermissionsSet.toList(),
+      });
+
+      if (channelResults == null) {
+        return new PermitResult(
+          null,
+          errorCode: PermitResult.errorCodeGeneral,
+          errorMessage: "Check permissions failed: null channel results",
+        );
+      } else {
+        return new PermitResult(_resultsFromMap(channelResults));
+      }
+    } on PlatformException catch (e) {
+      print(e.message);
+      return new PermitResult(
+        null,
+        errorCode: PermitResult.errorCodeGeneral,
+        errorMessage: "Check permissions failed: ${e.message}",
+      );
     }
-//    return new PermitResult.fromMap(permissionsMap);
+  }
+
+  static Map<PermitType, PermissionStatus> _resultsFromMap(
+      Map<int, int> resultsMap) {
+    Map<PermitType, PermissionStatus> finalResults =
+        new Map<PermitType, PermissionStatus>();
+    resultsMap.forEach((permitTypeInt, permissionResult) {
+      finalResults[_permitTypeFromInt(permitTypeInt)] =
+          PermissionStatus.values[permissionResult];
+    });
+    return finalResults;
+  }
+
+  static PermitType _permitTypeFromInt(int permitTypeInt) {
+    if (permitTypeInt >= 0 && permitTypeInt < PermitType.values.length) {
+      return PermitType.values[permitTypeInt];
+    }
     return null;
   }
-
-  static Future<Map<PermitType, PermitResult>> requestPermissions(List<PermitType> permissions) async {
-    var intPermissionsSet = new Set<int>.from(permissions.map((type) => type.index));
-    Map<String, dynamic> permissionsMap = await _channel.invokeMethod('request',
-        {'permissions' : intPermissionsSet.toList()});
-    if (permissionsMap == null) {
-//      return new PermitResult.fromMap(permissionsMap);
-    }
-//    return new PermitResult.fromMap(permissionsMap);
-  return null;
-  }
-
-
 }

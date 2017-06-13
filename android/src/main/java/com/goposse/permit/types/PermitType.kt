@@ -8,6 +8,7 @@
 package com.goposse.permit.types
 
 import android.Manifest
+import com.goposse.permit.common.PERMIT_NOT_USED
 
 enum class PermitType(val value: Int) {
 	camera(0) {
@@ -19,10 +20,16 @@ enum class PermitType(val value: Int) {
 	fineLocation(2) {
 		override fun permission() = Manifest.permission.ACCESS_FINE_LOCATION
 	},
-	phone(3) {
+	whenInUseLocation(3) {
+		override fun permission() = PERMIT_NOT_USED;
+	},
+	alwaysLocation(4) {
+		override fun permission() = PERMIT_NOT_USED;
+	},
+	phone(5) {
 		override fun permission() = Manifest.permission.CALL_PHONE
 	},
-	push(4) {
+	push(6) {
 		override fun permission() = PERMIT_NOT_USED
 	};
 
@@ -33,10 +40,20 @@ enum class PermitType(val value: Int) {
 				0 to camera,
 				1 to coarseLocation,
 				2 to fineLocation,
-				3 to phone,
-				4 to push
+				3 to whenInUseLocation,
+				4 to alwaysLocation,
+				5 to phone,
+				6 to push
+		)
+
+		val stringMap = mapOf(
+				camera.permission() to camera,
+				coarseLocation.permission() to coarseLocation,
+				fineLocation.permission() to fineLocation,
+				phone.permission() to phone
 		)
 
 		fun fromInt(intValue: Int): PermitType? = valueMap[intValue]
+		fun fromString(stringValue: String): PermitType? = stringMap[stringValue]
 	}
 }

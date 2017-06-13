@@ -5,7 +5,7 @@
  * Copyright (c) 2017 Posse Productions LLC. All rights reserved.
  * See LICENSE for distribution and usage details.
  */
-package com.goposse.permit.types
+package com.goposse.permit.common
 
 // globals
 val PERMIT_NOT_USED: String = "not_used"
