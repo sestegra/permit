@@ -44,8 +44,8 @@ class PermissionActivity : Activity() {
 		val receiver = intent.extras.get("resultReceiver") as ResultReceiver
 		val resultData = Bundle()
 		if (permissions != null && grantResults != null) {
-			resultData.putStringArray("permissions", permissions);
-			resultData.putIntArray("grantResults", grantResults);
+			resultData.putStringArray("permissions", permissions)
+			resultData.putIntArray("grantResults", grantResults)
 		}
 		receiver.send(resultCode, resultData)
 		finish()

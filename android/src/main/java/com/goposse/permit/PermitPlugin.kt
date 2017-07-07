@@ -27,6 +27,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
+import com.goposse.permit.common.PERMIT_NOT_USED
 
 class PermitPlugin(val activity: Activity) : MethodCallHandler {
 
@@ -58,11 +59,15 @@ class PermitPlugin(val activity: Activity) : MethodCallHandler {
 	 * @param result the Flutter channel result object to notify on completion
 	 */
 	private fun checkPermissions(permissions: List<Int>, result: Result) {
-		val resultsMap = mutableMapOf<Int, Int>()
+		val resultsMap = mutableMapOf<Int, Map<String, Any>>()
 		for (permissionInt: Int in permissions) {
 			val requestedPermission = PermitType.fromInt(permissionInt)?.permission()
-			if (requestedPermission == null) {
+			if (requestedPermission == null || requestedPermission == PERMIT_NOT_USED) {
 				Log.w(LOG_TAG, "Permit: type ($permissionInt) not supported")
+				resultsMap[permissionInt] = hashMapOf<String, Any>(
+						"code" to PermitResult.unavailable.value,
+						"requestCount" to 0
+				)
 				continue
 			}
 			Log.d(LOG_TAG, "Checking $requestedPermission")
@@ -83,7 +88,10 @@ class PermitPlugin(val activity: Activity) : MethodCallHandler {
 				}
 			}
 			Log.d(LOG_TAG, "Permission for $requestedPermission ${permissionResult}")
-			resultsMap[permissionInt] = permissionResult.value
+			resultsMap[permissionInt] = hashMapOf<String, Any>(
+					"code" to permissionResult.value,
+					"requestCount" to 0
+			)
 		}
 		Log.d(LOG_TAG, "All permissions checked, returning ${resultsMap.javaClass.name} with integer keys of permission types and integer values of permission results")
 		result.success(resultsMap)

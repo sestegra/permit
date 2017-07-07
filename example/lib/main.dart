@@ -92,7 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
     PermitType.values.forEach((permitType) {
       String status = "unavailable";
       if (_permissionStatuses != null && _permissionStatuses.success()) {
-        if (_permissionStatuses.results.containsKey(permitType)) {
+        if (_permissionStatuses.statuses.containsKey(permitType)) {
           status = _resultCodeToReadableString(
               _permissionStatuses.resultCodeForPermitType(permitType));
         }
@@ -142,13 +142,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String _resultCodeToReadableString(PermissionStatus permissionStatus) {
-    if (permissionStatus == PermissionStatus.granted) {
+    if (permissionStatus.code == PermissionStatusCode.granted) {
       return "granted";
-    } else if (permissionStatus == PermissionStatus.denied) {
+    } else if (permissionStatus.code == PermissionStatusCode.denied) {
       return "denied";
-    } else if (permissionStatus == PermissionStatus.needsRationale) {
+    } else if (permissionStatus.code == PermissionStatusCode.needsRationale) {
       return "needs rationale";
-    } else if (permissionStatus == PermissionStatus.unknown) {
+    } else if (permissionStatus.code == PermissionStatusCode.unknown) {
       return "unknown";
     } else {
       return "unavailable";

@@ -4,17 +4,29 @@ import 'dart:collection';
 import 'package:flutter/services.dart';
 
 enum PermitType { camera, coarseLocation, fineLocation, whenInUseLocation, alwaysLocation, phone, push }
-enum PermissionStatus { unknown, needsRationale, denied, granted, unavailable }
+enum PermissionStatusCode { unknown, needsRationale, denied, granted, unavailable }
+
+class PermissionStatus {
+  PermissionStatus(PermissionStatusCode code, int requestCount)
+      : _code = code,
+        _requestCount = requestCount;
+
+  PermissionStatusCode _code;
+  PermissionStatusCode get code => _code;
+
+  int _requestCount;
+  int get requestCount => _requestCount;
+}
 
 class PermitResult {
   static final errorCodeGeneral = 500;
 
   // generic error result
-  static PermitResult error = new PermitResult(null,
-      errorCode: errorCodeGeneral, errorMessage: "Permissions Check Failed");
+  static PermitResult error =
+      new PermitResult(null, errorCode: errorCodeGeneral, errorMessage: "Permissions Check Failed");
 
   // constructors
-  PermitResult(this.results, {this.errorCode = 0, this.errorMessage});
+  PermitResult(this.statuses, {this.errorCode = 0, this.errorMessage});
 
   /// if there was an error returned while trying to check the permission status
   final int errorCode;
@@ -25,13 +37,28 @@ class PermitResult {
   /// see: https://developer.android.com/training/permissions/requesting.html#perm-request
   /// NOTE: needsJustification will always be false on iOS as you can only request
   /// permissions once
-  final Map<PermitType, PermissionStatus> results;
+  final Map<PermitType, PermissionStatus> statuses;
 
   // Used to check if the result was successful, or if there was an error
   bool success() => errorCode == 0;
 
+  bool hasGrantedAny(List<PermitType> permissions, {bool grantedIfUnavailable = true}) {
+    if (permissions == null || permissions.length == 0 || statuses == null || statuses.length == 0) {
+      return false;
+    }
+    for (PermitType type in permissions) {
+      PermissionStatusCode code = statuses[type].code;
+      if (code == PermissionStatusCode.granted) {
+        return true;
+      } else if (grantedIfUnavailable && code == PermissionStatusCode.unavailable) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   PermissionStatus resultCodeForPermitType(PermitType permitType) {
-    return results[permitType];
+    return statuses[permitType];
   }
 }
 
@@ -39,20 +66,16 @@ class Permit {
   static const MethodChannel _channel = const MethodChannel('permit');
 
   // plugin functions
-  static Future<PermitResult> checkPermissions(
-      List<PermitType> permissions) async {
+  static Future<PermitResult> checkPermissions(List<PermitType> permissions) async {
     return invokePermitChannelMethod(permissions, 'check');
   }
 
-  static Future<PermitResult> requestPermissions(
-      List<PermitType> permissions) async {
+  static Future<PermitResult> requestPermissions(List<PermitType> permissions) async {
     return invokePermitChannelMethod(permissions, 'request');
   }
 
-  static Future<PermitResult> invokePermitChannelMethod(
-      List<PermitType> permissions, String method) async {
-    var intPermissionsSet =
-    new Set<int>.from(permissions.map((type) => type.index));
+  static Future<PermitResult> invokePermitChannelMethod(List<PermitType> permissions, String method) async {
+    var intPermissionsSet = new Set<int>.from(permissions.map((type) => type.index));
 
     try {
       // channelResults should be a LinkedHashMap with int keys and int values
@@ -79,13 +102,14 @@ class Permit {
     }
   }
 
-  static Map<PermitType, PermissionStatus> _resultsFromMap(
-      Map<int, int> resultsMap) {
-    Map<PermitType, PermissionStatus> finalResults =
-        new Map<PermitType, PermissionStatus>();
+  static Map<PermitType, PermissionStatus> _resultsFromMap(Map<int, Map<String, dynamic>> resultsMap) {
+    Map<PermitType, PermissionStatus> finalResults = new Map<PermitType, PermissionStatus>();
     resultsMap.forEach((permitTypeInt, permissionResult) {
-      finalResults[_permitTypeFromInt(permitTypeInt)] =
-          PermissionStatus.values[permissionResult];
+      var status = new PermissionStatus(
+        PermissionStatusCode.values[permissionResult["code"]],
+        permissionResult["requestCount"],
+      );
+      finalResults[_permitTypeFromInt(permitTypeInt)] = status;
     });
     return finalResults;
   }
